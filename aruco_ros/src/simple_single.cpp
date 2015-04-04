@@ -188,6 +188,12 @@ public:
             br.sendTransform(stampedTransform);
             geometry_msgs::PoseStamped poseMsg;
             tf::poseTFToMsg(transform, poseMsg.pose);
+            double oldX = poseMsg.pose.position.x;
+            double oldY = poseMsg.pose.position.y;
+            double oldZ = poseMsg.pose.position.z;
+            poseMsg.pose.position.x = oldZ;
+            poseMsg.pose.position.z = -oldY;
+            poseMsg.pose.position.y = -oldX;
             poseMsg.header.frame_id = reference_frame;
             poseMsg.header.stamp = ros::Time::now();
             pose_pub.publish(poseMsg);
