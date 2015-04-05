@@ -155,7 +155,7 @@ public:
       try
       {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
-        inImage = cv_ptr->image;
+        cv:flip(cv_ptr->image, inImage, -1);
 
         //detection results will go into "markers"
         markers.clear();
