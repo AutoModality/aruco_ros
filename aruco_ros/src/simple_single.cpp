@@ -155,7 +155,7 @@ public:
       try
       {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::RGB8);
-        cv:flip(cv_ptr->image, inImage, -1);
+        inImage = cv_ptr->image;
 
         //detection results will go into "markers"
         markers.clear();
@@ -188,12 +188,16 @@ public:
             br.sendTransform(stampedTransform);
             geometry_msgs::PoseStamped poseMsg;
             tf::poseTFToMsg(transform, poseMsg.pose);
+
+            // transform to right hand coordinate system
+            // TODO: move this out of aruco code to somewhere else
             double oldX = poseMsg.pose.position.x;
             double oldY = poseMsg.pose.position.y;
             double oldZ = poseMsg.pose.position.z;
             poseMsg.pose.position.x = oldZ;
             poseMsg.pose.position.z = -oldY;
             poseMsg.pose.position.y = -oldX;
+
             poseMsg.header.frame_id = reference_frame;
             poseMsg.header.stamp = ros::Time::now();
             pose_pub.publish(poseMsg);
