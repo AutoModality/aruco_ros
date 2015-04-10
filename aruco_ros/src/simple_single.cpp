@@ -45,6 +45,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <aruco_ros/aruco_ros_utils.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
+#include <std_msgs/Float64.h>
 
 using namespace aruco;
 
@@ -64,6 +65,7 @@ private:
   ros::Publisher pose_pub;
   ros::Publisher transform_pub; 
   ros::Publisher position_pub;
+  ros::Publisher time_pub;
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
@@ -91,6 +93,7 @@ public:
     pose_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 100);
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
+    time_pub = nh.advertise<std_msgs::Float64>("time", 100);
 
     nh.param<double>("marker_size", marker_size, 0.05);
     nh.param<int>("marker_id", marker_id, 300);
@@ -151,6 +154,7 @@ public:
     static tf::TransformBroadcaster br;
     if(cam_info_received)
     {
+      double begin_secs =ros::Time::now().toSec();
       cv_bridge::CvImagePtr cv_ptr;
       try
       {
@@ -243,6 +247,10 @@ public:
           debug_msg.image = mDetector.getThresholdedImage();
           debug_pub.publish(debug_msg.toImageMsg());
         }
+        double end_secs = ros::Time::now().toSec();
+        std_msgs::Float64 latency;
+        latency.data = end_secs - begin_secs;
+        time_pub.publish(latency);
       }
       catch (cv_bridge::Exception& e)
       {
