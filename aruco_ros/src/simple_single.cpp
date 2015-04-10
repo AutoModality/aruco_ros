@@ -214,23 +214,27 @@ public:
             positionMsg.header = transformMsg.header;
             positionMsg.vector = transformMsg.transform.translation;
             position_pub.publish(positionMsg);
-          }
-          // but drawing all the detected markers
-          markers[i].draw(inImage,cv::Scalar(0,0,255),2);
-        }
 
-        //draw a 3d cube in each marker if there is 3d info
-        if(camParam.isValid() && marker_size!=-1)
-        {
-          for(size_t i=0; i<markers.size(); ++i)
-          {
-            CvDrawingUtils::draw3dAxis(inImage, markers[i], camParam);
+            double end_secs = ros::Time::now().toSec();
+            std_msgs::Float64 latency;
+            latency.data = end_secs - msg.get()->header.stamp.toSec();
+            time_pub.publish(latency);
           }
         }
 
         if(image_pub.getNumSubscribers() > 0)
         {
-          //show input with augmented information
+			//draw a 3d cube in each marker if there is 3d info
+			if(camParam.isValid() && marker_size!=-1)
+			{
+			  for(size_t i=0; i<markers.size(); ++i)
+			  {
+				markers[i].draw(inImage,cv::Scalar(0,0,255),2);
+				CvDrawingUtils::draw3dAxis(inImage, markers[i], camParam);
+			  }
+			}
+
+            //show input with augmented information
           cv_bridge::CvImage out_msg;
           out_msg.header.stamp = ros::Time::now();
           out_msg.encoding = sensor_msgs::image_encodings::RGB8;
@@ -247,10 +251,6 @@ public:
           debug_msg.image = mDetector.getThresholdedImage();
           debug_pub.publish(debug_msg.toImageMsg());
         }
-        double end_secs = ros::Time::now().toSec();
-        std_msgs::Float64 latency;
-        latency.data = end_secs - begin_secs;
-        time_pub.publish(latency);
       }
       catch (cv_bridge::Exception& e)
       {
