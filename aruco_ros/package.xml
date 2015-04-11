@@ -23,4 +23,5 @@
   <depend>tf</depend>
   <depend>aruco</depend>
   <depend>aruco_msgs</depend>
+  <depend>brain_box_msgs</depend>
 </package>

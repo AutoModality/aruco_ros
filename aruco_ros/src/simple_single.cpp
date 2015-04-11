@@ -46,6 +46,9 @@ or implied, of Rafael Muñoz Salinas.
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <std_msgs/Float64.h>
+#include <brain_box_msgs/BBLatency.h>
+#include <brain_box_msgs/BBPose.h>
+#include <boost/array.hpp>
 
 using namespace aruco;
 
@@ -90,7 +93,7 @@ public:
 
     image_pub = it.advertise("result", 1);
     debug_pub = it.advertise("debug", 1);
-    pose_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 100);
+    pose_pub = nh.advertise<brain_box_msgs::BBPose>("pose", 100);
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
     time_pub = nh.advertise<std_msgs::Float64>("time", 100);
@@ -154,7 +157,8 @@ public:
     static tf::TransformBroadcaster br;
     if(cam_info_received)
     {
-      double begin_secs =ros::Time::now().toSec();
+      ros::Time in_time = ros::Time::now();
+      ros::Time image_stamp = msg.get()->header.stamp;
       cv_bridge::CvImagePtr cv_ptr;
       try
       {
@@ -190,7 +194,7 @@ public:
             tf::StampedTransform stampedTransform(transform, ros::Time::now(),
                                                   reference_frame, marker_frame);
             br.sendTransform(stampedTransform);
-            geometry_msgs::PoseStamped poseMsg;
+            brain_box_msgs::BBPose poseMsg;
             tf::poseTFToMsg(transform, poseMsg.pose);
 
             // transform to right hand coordinate system
@@ -202,22 +206,26 @@ public:
             poseMsg.pose.position.z = -oldY;
             poseMsg.pose.position.y = -oldX;
 
+            ros::Time out_time = ros::Time::now();
             poseMsg.header.frame_id = reference_frame;
-            poseMsg.header.stamp = ros::Time::now();
+            poseMsg.header.stamp = image_stamp;
+            // IP_ARUCO_ARUCO_IN
+            poseMsg.latency.image_pipeline_stamp3 = in_time;
+            // IP_ARUCO_ARUCO_IN
+            poseMsg.latency.image_pipeline_stamp4 = out_time;
             pose_pub.publish(poseMsg);
 
-            geometry_msgs::TransformStamped transformMsg;
-            tf::transformStampedTFToMsg(stampedTransform, transformMsg);
-            transform_pub.publish(transformMsg);
+//            geometry_msgs::TransformStamped transformMsg;
+//            tf::transformStampedTFToMsg(stampedTransform, transformMsg);
+//            transform_pub.publish(transformMsg);
+//
+//            geometry_msgs::Vector3Stamped positionMsg;
+//            positionMsg.header = transformMsg.header;
+//            positionMsg.vector = transformMsg.transform.translation;
+//            position_pub.publish(positionMsg);
 
-            geometry_msgs::Vector3Stamped positionMsg;
-            positionMsg.header = transformMsg.header;
-            positionMsg.vector = transformMsg.transform.translation;
-            position_pub.publish(positionMsg);
-
-            double end_secs = ros::Time::now().toSec();
             std_msgs::Float64 latency;
-            latency.data = end_secs - msg.get()->header.stamp.toSec();
+            latency.data = out_time.toSec() - image_stamp.toSec();
             time_pub.publish(latency);
           }
         }

@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   aruco
   aruco_msgs
+  brain_box_msgs
 )
 
 generate_dynamic_reconfigure_options(
