@@ -68,7 +68,6 @@ private:
   ros::Publisher pose_pub;
   ros::Publisher transform_pub; 
   ros::Publisher position_pub;
-  ros::Publisher time_pub;
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
@@ -96,7 +95,6 @@ public:
     pose_pub = nh.advertise<brain_box_msgs::BBPose>("pose", 100);
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
-    time_pub = nh.advertise<std_msgs::Float64>("time", 100);
 
     nh.param<double>("marker_size", marker_size, 0.05);
     nh.param<int>("marker_id", marker_id, 300);
@@ -209,9 +207,11 @@ public:
             ros::Time out_time = ros::Time::now();
             poseMsg.header.frame_id = reference_frame;
             poseMsg.header.stamp = image_stamp;
-            // IP_ARUCO_ARUCO_IN
+            // IP_ARUCO_POINTGREY_OUT=0
+            poseMsg.latency.image_pipeline_stamp0 = image_stamp;
+            // IP_ARUCO_ARUCO_IN=3
             poseMsg.latency.image_pipeline_stamp3 = in_time;
-            // IP_ARUCO_ARUCO_IN
+            // IP_ARUCO_ARUCO_OUT=4
             poseMsg.latency.image_pipeline_stamp4 = out_time;
             pose_pub.publish(poseMsg);
 
@@ -223,10 +223,6 @@ public:
 //            positionMsg.header = transformMsg.header;
 //            positionMsg.vector = transformMsg.transform.translation;
 //            position_pub.publish(positionMsg);
-
-            std_msgs::Float64 latency;
-            latency.data = out_time.toSec() - image_stamp.toSec();
-            time_pub.publish(latency);
           }
         }
 
