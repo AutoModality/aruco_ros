@@ -48,6 +48,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <std_msgs/Float64.h>
 #include <brain_box_msgs/BBLatency.h>
 #include <brain_box_msgs/BBPose.h>
+#include <brain_box_msgs/BBVisionStatus.h>
 #include <boost/array.hpp>
 
 using namespace aruco;
@@ -68,9 +69,11 @@ private:
   ros::Publisher pose_pub;
   ros::Publisher transform_pub; 
   ros::Publisher position_pub;
+  ros::Publisher status_pub;
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
+  brain_box_msgs::BBVisionStatus status;
 
   double marker_size;
   int marker_id;
@@ -95,6 +98,7 @@ public:
     pose_pub = nh.advertise<brain_box_msgs::BBPose>("pose", 100);
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
+    status_pub = nh.advertise<brain_box_msgs::BBVisionStatus>("/status/vision", 100);
 
     nh.param<double>("marker_size", marker_size, 0.05);
     nh.param<int>("marker_id", marker_id, 300);
@@ -112,6 +116,8 @@ public:
              marker_size, marker_id);
     ROS_INFO("Aruco node will publish pose to TF with %s as parent and %s as child.",
              reference_frame.c_str(), marker_frame.c_str());
+
+    status.targets_acquired = 0;
   }
 
   bool getTransform(const std::string& refFrame,
@@ -168,11 +174,13 @@ public:
         //Ok, let's detect
         mDetector.detect(inImage, markers, camParam, marker_size, false);
         //for each marker, draw info and its boundaries in the image
+        uint16_t targets_acquired = 0;
         for(size_t i=0; i<markers.size(); ++i)
         {
           // only publishing the selected marker
           if(markers[i].id == marker_id)
           {
+        	targets_acquired++;
             tf::Transform transform = aruco_ros::arucoMarker2Tf(markers[i]);
             tf::StampedTransform cameraToReference;
             cameraToReference.setIdentity();
@@ -225,6 +233,13 @@ public:
 //            position_pub.publish(positionMsg);
           }
         }
+
+        if(targets_acquired != status.targets_acquired)
+        {
+        	ROS_INFO_STREAM("targets_acquired = " << targets_acquired);
+        	status.targets_acquired = targets_acquired;
+        }
+    	status_pub.publish(status);
 
         if(image_pub.getNumSubscribers() > 0)
         {
