@@ -175,6 +175,7 @@ public:
         mDetector.detect(inImage, markers, camParam, marker_size, false);
         //for each marker, draw info and its boundaries in the image
         uint16_t targets_acquired = 0;
+        ros::Time out_time;
         for(size_t i=0; i<markers.size(); ++i)
         {
           // only publishing the selected marker
@@ -212,7 +213,7 @@ public:
             poseMsg.pose.position.z = -oldY;
             poseMsg.pose.position.y = -oldX;
 
-            ros::Time out_time = ros::Time::now();
+            out_time = ros::Time::now();
             poseMsg.header.frame_id = reference_frame;
             poseMsg.header.stamp = image_stamp;
             // IP_ARUCO_POINTGREY_OUT=0
@@ -239,6 +240,14 @@ public:
         	ROS_INFO_STREAM("targets_acquired = " << targets_acquired);
         	status.targets_acquired = targets_acquired;
         }
+        status.status = status.STATUS_GREEN;
+        uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000;
+        status.latency_ave = latency_ms;
+        status.latency_min = latency_ms;
+        status.latency_max = latency_ms;
+        status.fps_ave = 1000000 / latency_ms;
+        status.fps_min = 1000000 / latency_ms;
+        status.fps_max = 1000000 / latency_ms;
     	status_pub.publish(status);
 
         if(image_pub.getNumSubscribers() > 0)
