@@ -67,6 +67,7 @@ private:
   image_transport::Publisher image_pub;
   image_transport::Publisher debug_pub;
   ros::Publisher pose_pub;
+  ros::Publisher bbpose_pub;
   ros::Publisher transform_pub; 
   ros::Publisher position_pub;
   ros::Publisher status_pub;
@@ -95,7 +96,8 @@ public:
 
     image_pub = it.advertise("result", 1);
     debug_pub = it.advertise("debug", 1);
-    pose_pub = nh.advertise<brain_box_msgs::BBPose>("pose", 100);
+    pose_pub = nh.advertise<geometry_msgs::PoseStamped>("pose", 100);
+    bbpose_pub = nh.advertise<brain_box_msgs::BBPose>("bbpose", 100);
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
     status_pub = nh.advertise<brain_box_msgs::BBVisionStatus>("/status/vision", 100);
@@ -201,27 +203,38 @@ public:
             tf::StampedTransform stampedTransform(transform, ros::Time::now(),
                                                   reference_frame, marker_frame);
             br.sendTransform(stampedTransform);
-            brain_box_msgs::BBPose poseMsg;
-            tf::poseTFToMsg(transform, poseMsg.pose);
+            brain_box_msgs::BBPose bbPoseMsg;
+            tf::poseTFToMsg(transform, bbPoseMsg.pose);
 
-            // transform to right hand coordinate system
+            // transform to ned
             // TODO: move this out of aruco code to somewhere else
-            double oldX = poseMsg.pose.position.x;
-            double oldY = poseMsg.pose.position.y;
-            double oldZ = poseMsg.pose.position.z;
-            poseMsg.pose.position.x = oldZ;
-            poseMsg.pose.position.z = -oldY;
-            poseMsg.pose.position.y = -oldX;
+            double oldX = bbPoseMsg.pose.position.x;
+            double oldY = bbPoseMsg.pose.position.y;
+            double oldZ = bbPoseMsg.pose.position.z;
+            bbPoseMsg.pose.position.x = oldZ;
+            bbPoseMsg.pose.position.z = -oldY;
+            bbPoseMsg.pose.position.y = -oldX;
 
             out_time = ros::Time::now();
+            bbPoseMsg.header.frame_id = reference_frame;
+            bbPoseMsg.header.stamp = image_stamp;
+            // IP_ARUCO_POINTGREY_OUT=0
+            bbPoseMsg.latency.image_pipeline_stamp0 = image_stamp;
+            // IP_ARUCO_ARUCO_IN=3
+            bbPoseMsg.latency.image_pipeline_stamp3 = in_time;
+            // IP_ARUCO_ARUCO_OUT=4
+            bbPoseMsg.latency.image_pipeline_stamp4 = out_time;
+            bbpose_pub.publish(bbPoseMsg);
+
+
+            geometry_msgs::PoseStamped poseMsg;
             poseMsg.header.frame_id = reference_frame;
             poseMsg.header.stamp = image_stamp;
-            // IP_ARUCO_POINTGREY_OUT=0
-            poseMsg.latency.image_pipeline_stamp0 = image_stamp;
-            // IP_ARUCO_ARUCO_IN=3
-            poseMsg.latency.image_pipeline_stamp3 = in_time;
-            // IP_ARUCO_ARUCO_OUT=4
-            poseMsg.latency.image_pipeline_stamp4 = out_time;
+            // convert to enu
+            poseMsg.pose.position.x = bbPoseMsg.pose.position.y;
+            poseMsg.pose.position.y = bbPoseMsg.pose.position.x;
+            poseMsg.pose.position.z = -bbPoseMsg.pose.position.z;
+            poseMsg.pose.orientation = bbPoseMsg.pose.orientation;
             pose_pub.publish(poseMsg);
 
 //            geometry_msgs::TransformStamped transformMsg;
