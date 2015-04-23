@@ -235,7 +235,7 @@ public:
             poseMsg.header.stamp = image_stamp;
             // convert to enu
             poseMsg.pose.position.x = bbPoseMsg.pose.position.y;
-            poseMsg.pose.position.y = bbPoseMsg.pose.position.x;
+            poseMsg.pose.position.y = -bbPoseMsg.pose.position.x;
             poseMsg.pose.position.z = -bbPoseMsg.pose.position.z;
             poseMsg.pose.orientation = bbPoseMsg.pose.orientation;
             pose_pub.publish(poseMsg);
