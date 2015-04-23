@@ -46,6 +46,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Int32.h>
 #include <brain_box_msgs/BBLatency.h>
 #include <brain_box_msgs/BBPose.h>
 #include <brain_box_msgs/BBVisionStatus.h>
@@ -71,6 +72,7 @@ private:
   ros::Publisher transform_pub; 
   ros::Publisher position_pub;
   ros::Publisher status_pub;
+  ros::Publisher indicator_pub;
   std::string marker_frame;
   std::string camera_frame;
   std::string reference_frame;
@@ -101,6 +103,7 @@ public:
     transform_pub = nh.advertise<geometry_msgs::TransformStamped>("transform", 100);
     position_pub = nh.advertise<geometry_msgs::Vector3Stamped>("position", 100);
     status_pub = nh.advertise<brain_box_msgs::BBVisionStatus>("/status/vision", 100);
+    indicator_pub = nh.advertise<std_msgs::Int32>("/indicator/green", 100);
 
     nh.param<double>("marker_size", marker_size, 0.05);
     nh.param<int>("marker_id", marker_id, 300);
@@ -262,6 +265,19 @@ public:
         status.fps_min = 1000000 / latency_ms;
         status.fps_max = 1000000 / latency_ms;
     	status_pub.publish(status);
+
+    	if(targets_acquired > 0)
+    	{
+    		std_msgs::Int32 value;
+    		value.data = 8;
+    		indicator_pub.publish(value);
+    	}
+    	else
+    	{
+    		std_msgs::Int32 value;
+    		value.data = 0;
+    		indicator_pub.publish(value);
+    	}
 
         if(image_pub.getNumSubscribers() > 0)
         {
