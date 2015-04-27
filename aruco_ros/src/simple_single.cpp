@@ -210,27 +210,22 @@ public:
             br.sendTransform(stampedTransform);
             tf::poseTFToMsg(transform, bbPoseMsg.pose);
 
-            // transform to enu
+            // transform to enu wrt to camera
             // TODO: move this out of aruco code to somewhere else
             double oldX = bbPoseMsg.pose.position.x;
             double oldY = bbPoseMsg.pose.position.y;
             double oldZ = bbPoseMsg.pose.position.z;
-
-            bbPoseMsg.pose.position.x = -oldX;
-            bbPoseMsg.pose.position.y = -oldZ;
-            bbPoseMsg.pose.position.z = oldY;
+            bbPoseMsg.pose.position.x = oldX;
+            bbPoseMsg.pose.position.y = oldZ;
+            bbPoseMsg.pose.position.z = -oldY;
             bbPoseMsg.status = brain_box_msgs::BBPose::STATUS_LOCK;
-
-//            geometry_msgs::TransformStamped transformMsg;
-//            tf::transformStampedTFToMsg(stampedTransform, transformMsg);
-//            transform_pub.publish(transformMsg);
-//
-//            geometry_msgs::Vector3Stamped positionMsg;
-//            positionMsg.header = transformMsg.header;
-//            positionMsg.vector = transformMsg.transform.translation;
-//            position_pub.publish(positionMsg);
           }
         }
+
+        bbPoseMsg.pose.orientation.x = 0.0;
+        bbPoseMsg.pose.orientation.y = 0.0;
+        bbPoseMsg.pose.orientation.z = 0.0;
+        bbPoseMsg.pose.orientation.w = 1.0;
 
         out_time = ros::Time::now();
         // IP_ARUCO_POINTGREY_OUT=0
@@ -241,6 +236,15 @@ public:
         bbPoseMsg.latency.image_pipeline_stamp4 = out_time;
 
         bbpose_pub.publish(bbPoseMsg);
+
+        //            geometry_msgs::TransformStamped transformMsg;
+        //            tf::transformStampedTFToMsg(stampedTransform, transformMsg);
+        //            transform_pub.publish(transformMsg);
+        //
+        //            geometry_msgs::Vector3Stamped positionMsg;
+        //            positionMsg.header = transformMsg.header;
+        //            positionMsg.vector = transformMsg.transform.translation;
+        //            position_pub.publish(positionMsg);
 
         if(targets_acquired != status.targets_acquired)
         {
