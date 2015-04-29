@@ -184,6 +184,10 @@ public:
         bbPoseMsg.header.frame_id = reference_frame;
         bbPoseMsg.header.stamp = image_stamp;
         bbPoseMsg.status = brain_box_msgs::BBPose::STATUS_NO_TARGET;
+        bbPoseMsg.pose.orientation.x = 0.0;
+        bbPoseMsg.pose.orientation.y = 0.0;
+        bbPoseMsg.pose.orientation.z = 0.0;
+        bbPoseMsg.pose.orientation.w = 1.0;
         for(size_t i=0; i<markers.size(); ++i)
         {
           if(markers[i].id == marker_id)
@@ -222,11 +226,6 @@ public:
           }
         }
 
-        bbPoseMsg.pose.orientation.x = 0.0;
-        bbPoseMsg.pose.orientation.y = 0.0;
-        bbPoseMsg.pose.orientation.z = 0.0;
-        bbPoseMsg.pose.orientation.w = 1.0;
-
         out_time = ros::Time::now();
         // IP_ARUCO_POINTGREY_OUT=0
         bbPoseMsg.latency.image_pipeline_stamp0 = image_stamp;
@@ -250,7 +249,20 @@ public:
         {
         	ROS_INFO_STREAM("targets_acquired = " << targets_acquired);
         	status.targets_acquired = targets_acquired;
+        	if(targets_acquired > 0)
+        	{
+        		std_msgs::Int32 value;
+        		value.data = 8;
+        		indicator_pub.publish(value);
+        	}
+        	else
+        	{
+        		std_msgs::Int32 value;
+        		value.data = 0;
+        		indicator_pub.publish(value);
+        	}
         }
+
         status.status = status.STATUS_GREEN;
         uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000;
         status.latency_ave = latency_ms;
@@ -261,18 +273,6 @@ public:
         status.fps_max = 1000000 / latency_ms;
     	status_pub.publish(status);
 
-    	if(targets_acquired > 0)
-    	{
-    		std_msgs::Int32 value;
-    		value.data = 8;
-    		indicator_pub.publish(value);
-    	}
-    	else
-    	{
-    		std_msgs::Int32 value;
-    		value.data = 0;
-    		indicator_pub.publish(value);
-    	}
 
         if(image_pub.getNumSubscribers() > 0)
         {
