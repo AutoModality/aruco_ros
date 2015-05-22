@@ -264,13 +264,13 @@ public:
         }
 
         status.status = status.STATUS_GREEN;
-        uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000;
+        uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000000;
         status.latency_ave = latency_ms;
         status.latency_min = latency_ms;
         status.latency_max = latency_ms;
-        status.fps_ave = 1000000 / latency_ms;
-        status.fps_min = 1000000 / latency_ms;
-        status.fps_max = 1000000 / latency_ms;
+        status.fps_ave = 1000 / latency_ms;
+        status.fps_min = 1000 / latency_ms;
+        status.fps_max = 1000 / latency_ms;
     	status_pub.publish(status);
 
 
