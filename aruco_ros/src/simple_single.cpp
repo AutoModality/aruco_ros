@@ -47,6 +47,7 @@ or implied, of Rafael Muñoz Salinas.
 #include <tf/transform_listener.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Int32.h>
+#include <brain_box_msgs/BBStatus.h>
 #include <brain_box_msgs/BBLatency.h>
 #include <brain_box_msgs/BBPose.h>
 #include <brain_box_msgs/BBVisionStatus.h>
@@ -263,7 +264,7 @@ public:
         	}
         }
 
-        status.status = status.STATUS_GREEN;
+        status.status.status = brain_box_msgs::BBStatus::STATUS_GREEN;
         uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000000;
         status.latency_ave = latency_ms;
         status.latency_min = latency_ms;
