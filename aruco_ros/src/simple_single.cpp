@@ -264,7 +264,7 @@ public:
         	}
         }
 
-        status.status.status = brain_box_msgs::BBStatus::STATUS_GREEN;
+        status.status.summary = brain_box_msgs::BBStatus::SUMMARY_GREEN;
         uint16_t latency_ms = (out_time.toNSec() - image_stamp.toNSec()) / 1000000;
         status.latency_ave = latency_ms;
         status.latency_min = latency_ms;
